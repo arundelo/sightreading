@@ -11,7 +11,7 @@ which is one-based -- two notes on the same line are a unison, so you
 type "1".)
 
 [rawgithub.com
-link.](https://rawgithub.com/arundelo/sightreading/master/sightreading.html)
+link.](https://rawgithub.com/arundelo/sightreading/master/index.html)
 
 TODO:
 -----
