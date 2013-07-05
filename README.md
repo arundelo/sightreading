@@ -10,6 +10,9 @@ intervals](https://en.wikipedia.org/wiki/Interval_%28music%29#Number),
 which is one-based -- two notes on the same line are a unison, so you
 type "1".)
 
+[rawgithub.com
+link.](https://rawgithub.com/arundelo/sightreading/master/sightreading.html)
+
 TODO:
 -----
 
