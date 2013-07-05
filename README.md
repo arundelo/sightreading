@@ -18,4 +18,4 @@ TODO:
 - Make the game start easy and get progressively more difficult in response to
   the user's skill.
 - Intervals wider than an octave.
-- Add a tutorial.
+- Add an interactive tutorial.
