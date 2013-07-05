@@ -170,9 +170,16 @@ Model.prototype.check = function(n) {
   var prevdyad = this.prevdyad();
   // One-based interval between hi and lo:
   var interval1 = prevdyad.hi - prevdyad.lo + 1;
-  this.view.message(n == interval1
-    ? '<span style="color: #073"><b>CORRECT</b></span>'
-    : '<span style="color: #700"><b>INCORRECT</b></span>')
+  var msg;
+
+  if (n == interval1) {
+    msg = '<span style="color: #073"><b>CORRECT</b></span>';
+  } else {
+    msg = '<span style="color: #700"><b>INCORRECT</b> (should have pressed ' +
+      interval1 + ' not ' + n + ')</span>';
+  }
+
+  this.view.message(msg);
 }
 
 function Controller(document, model) {
