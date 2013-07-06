@@ -198,11 +198,13 @@ function Controller(document, model) {
   for (rownum = 0; rownum < 3; rownum++) {
     buttonshtml += "<tr>";
     for (num = 7 - rownum * 3; num < 10 - rownum * 3; num++) {
-      buttonshtml += '<td><input id="button'
+      buttonshtml += '<td><button id="button'
         + num
-        + '" type="button" value = "'
+        + '" type="button" value="'
         + num
-        + '" />';
+        + '">'
+        + num
+        + '</button></td>';
     }
     buttonshtml += "</tr>";
   }
