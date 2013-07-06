@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Touch events</title>
+<script src="touch.js" type="text/javascript"></script>
+<meta name="viewport" content="width=320">
+<style type="text/css">
+  body {
+    color: #303030;
+    background-color: #EEEED0;
+    text-align: justify;
+  }
+
+  #main {
+    margin: 1ex auto;
+    padding: 1em;
+    width: 310px;
+    background-color: #FFFFE0;
+  }
+
+  #canvaspara {
+    margin: 0;
+  }
+
+  canvas {
+    border: thin #EEE dotted;
+  }
+</style>
+</head>
+
+<body>
+<div id="main">
+<p id="canvaspara">
+<canvas id="canvas" width="300" height="100" style="border: thin #EEE dotted;">
+For this to work you need a browser that supports the HTML &lt;canvas&gt;
+element.
+</canvas>
+</p>
+
+<p id="msgpara">JavaScript is loading ...</p>
+</div>
+
+<script type="text/javascript">
+main();
+</script>
+</body>
+</html>
