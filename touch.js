@@ -111,6 +111,43 @@ function main() {
             }
         );
 
+        // E.g., user hits the home button while touching.
+        canvas.addEventListener("touchcancel",
+            function(ev) {
+                if (this.touch) {
+                    var match = false;
+
+                    for (var i = 0; i < ev.changedTouches.length; i++) {
+                        if (this.touch === ev.changedTouches[i]) {
+                            match = true;
+                            break;
+                        }
+                    }
+
+                    // To be safe, cancel even if we didn't find our touch
+                    // event:
+                    this.touch = false;
+                    this.coords = false;
+                    this.movecoords = false;
+
+                    if (match) {
+                        msgpara.innerHTML =
+                            "touchcancel event; ev.changedTouches.length " +
+                                "is&nbsp;" + ev.changedTouches.length;
+                    } else {
+                        // Looks like this shouldn't be reached, assuming the
+                        // other event handlers delete this.touch when
+                        // necessary.
+                        msgpara.innerHTML =
+                            "touchcancel event; ev.changedTouches.length is " +
+                                ev.changedTouches.length +
+                                "; ev.changedTouches does not contain our" +
+                                " touch";
+                    }
+                }
+            }
+        );
+
         canvas.addEventListener("mouseup",
             function(ev) {
                 if (this.coords) {
