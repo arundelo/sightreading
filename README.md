@@ -24,3 +24,5 @@ TODO:
   the user's skill.
 - Intervals wider than an octave.
 - Add an interactive tutorial.
+
+<!-- vim: set sw=4 ts=4 expandtab ft=markdown: -->
