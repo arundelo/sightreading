@@ -35,17 +35,19 @@ function main() {
     var msgpara = document.getElementById("msgpara");
 
     if (canvas.getContext) {
-        msgpara.innerHTML = "Setting up event handlers ...";
+        var description = "Touch events demo (mouse works too)";
 
+        msgpara.innerHTML = "Setting up event handlers ...";
         canvas.translateCoords = translateCoords;
         canvas.drawCircle = drawCircle;
         canvas.drawLine = drawLine;
 
         canvas.addEventListener("touchstart",
             function(ev) {
-                if (!this.touch) {
+                if (!this.touch && !this.mouse) {
                     if (ev.changedTouches.length == 1) {
                         ev.preventDefault();
+                        msgpara.innerHTML = description;
                         this.touch = ev.changedTouches[0];
                         this.coords = this.translateCoords(ev.pageX, ev.pageY);
                         this.drawCircle(this.coords.x, this.coords.y);
@@ -56,9 +58,19 @@ function main() {
 
         canvas.addEventListener("mousedown",
             function(ev) {
-                ev.preventDefault();
-                this.coords = this.translateCoords(ev.pageX, ev.pageY);
-                this.drawCircle(this.coords.x, this.coords.y);
+                if (!this.touch) {
+                    ev.preventDefault();
+
+                    if (this.mouse) {
+                        msgpara.innerHTML = "Missing mouseup!";
+                    } else {
+                        msgpara.innerHTML = description;
+                    }
+
+                    this.mouse = true;
+                    this.coords = this.translateCoords(ev.pageX, ev.pageY);
+                    this.drawCircle(this.coords.x, this.coords.y);
+                }
             }
         );
 
@@ -148,23 +160,25 @@ function main() {
             }
         );
 
-        canvas.addEventListener("mouseup",
+        // Unlike with touch events, a mouseup doesn't necessarily happen on
+        // the same element as its mousedown:
+        document.body.addEventListener("mouseup",
             function(ev) {
-                if (this.coords) {
+                if (canvas.mouse) {
                     ev.preventDefault();
-                    var endcoords = this.translateCoords(
+                    var endcoords = canvas.translateCoords(
                         ev.pageX, ev.pageY);
-                    this.drawLine(
-                        this.coords.x, this.coords.y,
+                    canvas.drawLine(
+                        canvas.coords.x, canvas.coords.y,
                         endcoords.x, endcoords.y);
-                    this.drawCircle(endcoords.x, endcoords.y);
-                    this.touch = false;
-                    this.coords = false;
+                    canvas.drawCircle(endcoords.x, endcoords.y);
+                    canvas.mouse = false;
+                    canvas.coords = false;
                 }
             }
         );
 
-        msgpara.innerHTML = "Touch events demo (mouse works too)";
+        msgpara.innerHTML = description;
     } else {
         msgpara.innerHTML = "Sorry, your web browser does not support"
             + ' <a href="http://en.wikipedia.org/wiki/Canvas_element">'
