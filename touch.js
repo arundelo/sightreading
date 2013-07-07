@@ -52,6 +52,15 @@ function main() {
                         this.coords = this.translateCoords(ev.pageX, ev.pageY);
                         this.drawCircle(this.coords.x, this.coords.y);
                     }
+                } else if (this.touch) {
+                    // FIXME:  Looks like a double tap shows up as "touchstart,
+                    // touchstart, touchend", and the touchend only knows about
+                    // the touch from the second touchstart, so we should save
+                    // it here.
+                    msgpara.innerHTML = "<code>touchstart</code> while a"
+                        + " previous <code>touchstart</code>'s"
+                        + " <code>touchend</code> is pending; this is a bug"
+                        + " and you need to refresh";
                 }
             }
         );
