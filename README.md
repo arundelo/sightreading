@@ -18,8 +18,11 @@ If you're reading this on GitHub and you want to try out the sightreading game,
 TODO:
 -----
 
-- Improve interface.  (Animated visual feedback will make it easier for the
-  user to understand what's happening.)
+- Improve interface:
+  - Animated visual feedback will make it easier for the user to understand
+    what's happening.
+  - The on-screen keyboard (mainly for the benefit of smartphone and tablet
+    users) is clunky.  I have an idea for a nice touch interface.
 - Make the game start easy and get progressively more difficult in response to
   the user's skill.
 - Intervals wider than an octave.
