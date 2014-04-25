@@ -30,6 +30,38 @@ var drawLine = function(startx, starty, endx, endy) {
     ctx.restore();
 };
 
+var exceptiontostring = function(e) {
+    var errormsg = e.toString();
+
+    if (e.stack) {
+        // In Firefox the stack trace does not include the error message but in
+        // Chrome it does, so it'll be repeated.  Annoying but not worth it to
+        // code around now.
+        errormsg += "\n" + e.stack;
+    }
+
+    return errormsg;
+};
+
+// Wraps a function in a try-catch:
+var decoratesafe = function(f) {
+    return function() {
+        var that = this;
+        var e;
+
+        try {
+            return f.apply(that, arguments);
+        } catch (e) {
+            alert(exceptiontostring(e));
+        }
+    };
+};
+
+// Like addEventListener but wraps the callback in a try-catch:
+var addWrappedEventListener = function(eventname, f) {
+    this.addEventListener(eventname, decoratesafe(f));
+};
+
 function main() {
     var canvas = document.getElementById("canvas");
     var msgpara = document.getElementById("msgpara");
@@ -38,11 +70,13 @@ function main() {
         var description = "Touch events demo (mouse works too)";
 
         msgpara.innerHTML = "Setting up event handlers ...";
+        canvas.addWrappedEventListener = addWrappedEventListener;
+        document.body.addWrappedEventListener = addWrappedEventListener;
         canvas.translateCoords = translateCoords;
         canvas.drawCircle = drawCircle;
         canvas.drawLine = drawLine;
 
-        canvas.addEventListener("touchstart",
+        canvas.addWrappedEventListener("touchstart",
             function(ev) {
                 if (!this.touch && !this.mouse) {
                     if (ev.changedTouches.length == 1) {
@@ -53,19 +87,13 @@ function main() {
                         this.drawCircle(this.coords.x, this.coords.y);
                     }
                 } else if (this.touch) {
-                    // FIXME:  Looks like a double tap shows up as "touchstart,
-                    // touchstart, touchend", and the touchend only knows about
-                    // the touch from the second touchstart, so we should save
-                    // it here.
-                    msgpara.innerHTML = "<code>touchstart</code> while a"
-                        + " previous <code>touchstart</code>'s"
-                        + " <code>touchend</code> is pending; this is a bug"
-                        + " and you need to refresh";
+                    throw new Error(
+                        "touchstart while a previous touchstart is pending");
                 }
             }
         );
 
-        canvas.addEventListener("mousedown",
+        canvas.addWrappedEventListener("mousedown",
             function(ev) {
                 if (!this.touch) {
                     ev.preventDefault();
@@ -85,7 +113,7 @@ function main() {
 
         // touchend doesn't have meaningful coordinates (at least on my iPhone)
         // so keep track of the current touch's position:
-        canvas.addEventListener("touchmove",
+        canvas.addWrappedEventListener("touchmove",
             function(ev) {
                 if (this.touch) {
                     var update = false;
@@ -106,7 +134,7 @@ function main() {
             }
         );
 
-        canvas.addEventListener("touchend",
+        canvas.addWrappedEventListener("touchend",
             function(ev) {
                 if (this.touch) {
                     var end = false;
@@ -120,10 +148,12 @@ function main() {
 
                     if (end) {
                         ev.preventDefault();
-                        this.drawLine(
-                            this.coords.x, this.coords.y,
-                            this.movecoords.x, this.movecoords.y);
-                        this.drawCircle(this.movecoords.x, this.movecoords.y);
+                        if (this.movecoords) {
+                            this.drawLine(
+                                this.coords.x, this.coords.y,
+                                this.movecoords.x, this.movecoords.y);
+                            this.drawCircle(this.movecoords.x, this.movecoords.y);
+                        }
                         this.touch = false;
                         this.coords = false;
                         this.movecoords = false;
@@ -133,7 +163,7 @@ function main() {
         );
 
         // E.g., user hits the home button while touching.
-        canvas.addEventListener("touchcancel",
+        canvas.addWrappedEventListener("touchcancel",
             function(ev) {
                 if (this.touch) {
                     var match = false;
@@ -171,7 +201,7 @@ function main() {
 
         // Unlike with touch events, a mouseup doesn't necessarily happen on
         // the same element as its mousedown:
-        document.body.addEventListener("mouseup",
+        document.body.addWrappedEventListener("mouseup",
             function(ev) {
                 if (canvas.mouse) {
                     ev.preventDefault();
