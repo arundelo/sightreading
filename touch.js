@@ -102,6 +102,7 @@ function main() {
                         msgpara.innerHTML = description;
                         this.coords = this.translateCoords(t.pageX, t.pageY);
                         this.drawCircle(this.coords.x, this.coords.y);
+                        msgpara.innerHTML = this.coords.x + "\n" + this.coords.y;
                     }
                 }
             }
@@ -146,6 +147,8 @@ function main() {
                             ev.preventDefault();
                             this.movecoords = this.translateCoords(
                                 t.pageX, t.pageY);
+                            msgpara.innerHTML =
+                                this.movecoords.x + "\n" + this.movecoords.y;
                             break;
                         }
                     }
