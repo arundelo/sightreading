@@ -10,11 +10,12 @@ var translateCoords = function(x, y) {
 };
 
 var drawCircle = function(x, y) {
-    var ctx = this.getContext("2d");
+    var ctx = this.getContext("2d"),
+        radius = 40;
 
     ctx.save();
     ctx.beginPath();
-    ctx.arc(x, y, 20, 0, Math.PI*2);
+    ctx.arc(x, y, radius, 0, Math.PI*2);
     ctx.stroke();
     ctx.restore();
 };
@@ -28,6 +29,12 @@ var drawLine = function(startx, starty, endx, endy) {
     ctx.lineTo(endx, endy);
     ctx.stroke();
     ctx.restore();
+};
+
+var clear = function() {
+    var ctx = this.getContext("2d");
+
+    ctx.clearRect(0, 0, this.width, this.height);
 };
 
 var exceptiontostring = function(e) {
@@ -75,60 +82,72 @@ function main() {
         canvas.translateCoords = translateCoords;
         canvas.drawCircle = drawCircle;
         canvas.drawLine = drawLine;
+        canvas.clear = clear;
+        // These things are called "menu" because eventually this is going to
+        // be a (pie) menu:
+        canvas.menuactive = false;
+        canvas.menutouchid = null;
 
+        // FIXME:  These callbacks have a lot of duplicated code.
         canvas.addWrappedEventListener("touchstart",
             function(ev) {
-                if (!this.touch && !this.mouse) {
+                var t;
+
+                if (!this.menuactive) {
                     if (ev.changedTouches.length == 1) {
                         ev.preventDefault();
+                        this.menuactive = true;
+                        t = ev.changedTouches[0];
+                        this.menutouchid = t.identifier;
                         msgpara.innerHTML = description;
-                        this.touch = ev.changedTouches[0];
-                        this.coords = this.translateCoords(ev.pageX, ev.pageY);
+                        this.coords = this.translateCoords(t.pageX, t.pageY);
                         this.drawCircle(this.coords.x, this.coords.y);
                     }
-                } else if (this.touch) {
-                    throw new Error(
-                        "touchstart while a previous touchstart is pending");
                 }
             }
         );
 
         canvas.addWrappedEventListener("mousedown",
             function(ev) {
-                if (!this.touch) {
+                if (!this.menuactive) {
                     ev.preventDefault();
+                    this.menuactive = true;
 
-                    if (this.mouse) {
-                        msgpara.innerHTML = "Missing mouseup!";
-                    } else {
-                        msgpara.innerHTML = description;
-                    }
+                    msgpara.innerHTML = description;
 
                     this.mouse = true;
                     this.coords = this.translateCoords(ev.pageX, ev.pageY);
                     this.drawCircle(this.coords.x, this.coords.y);
+                    // This should have already been unset by touchend, but be
+                    // safe:
+                    this.menutouchid = null;
+                } else {
+                    // FIXME:  Probably should just cancel the menu here, at
+                    // least if it was a mousedown that activated the menu.
+                    msgpara.innerHTML = "mousedown while menu is active!";
                 }
             }
         );
 
         // touchend doesn't have meaningful coordinates (at least on my iPhone)
-        // so keep track of the current touch's position:
+        // so keep track of the current touch's position.  FIXME:  For pie menu
+        // purposes, the touchmove won't just store the current position, it
+        // will change the menu selection, so there needs to be a mousemove
+        // handler too.
         canvas.addWrappedEventListener("touchmove",
             function(ev) {
-                if (this.touch) {
-                    var update = false;
+                var i, t;
 
-                    for (var i = 0; i < ev.changedTouches.length; i++) {
-                        if (this.touch === ev.changedTouches[i]) {
-                            update = true;
+                if (this.menuactive && typeof this.menutouchid === "number") {
+                    for (i = 0; i < ev.changedTouches.length; i++) {
+                        t = ev.changedTouches[i];
+
+                        if (this.menutouchid === t.identifier) {
+                            ev.preventDefault();
+                            this.movecoords = this.translateCoords(
+                                t.pageX, t.pageY);
                             break;
                         }
-                    }
-
-                    if (update) {
-                        ev.preventDefault();
-                        this.movecoords = this.translateCoords(
-                            ev.pageX, ev.pageY);
                     }
                 }
             }
@@ -136,27 +155,24 @@ function main() {
 
         canvas.addWrappedEventListener("touchend",
             function(ev) {
-                if (this.touch) {
-                    var end = false;
+                var i, t;
 
-                    for (var i = 0; i < ev.changedTouches.length; i++) {
-                        if (this.touch === ev.changedTouches[i]) {
-                            end = true;
+                if (this.menuactive && typeof this.menutouchid === "number") {
+                    for (i = 0; i < ev.changedTouches.length; i++) {
+                        t = ev.changedTouches[i];
+
+                        if (this.menutouchid === t.identifier) {
+                            ev.preventDefault();
+                            // The current position is this.movecoords (if set)
+                            // or this.coords.
+                            this.menuactive = false;
+                            this.menutouchid = null;
+                            this.coords = false;
+                            this.movecoords = false;
+                            // Erase the circle:
+                            this.clear();
                             break;
                         }
-                    }
-
-                    if (end) {
-                        ev.preventDefault();
-                        if (this.movecoords) {
-                            this.drawLine(
-                                this.coords.x, this.coords.y,
-                                this.movecoords.x, this.movecoords.y);
-                            this.drawCircle(this.movecoords.x, this.movecoords.y);
-                        }
-                        this.touch = false;
-                        this.coords = false;
-                        this.movecoords = false;
                     }
                 }
             }
@@ -165,54 +181,61 @@ function main() {
         // E.g., user hits the home button while touching.
         canvas.addWrappedEventListener("touchcancel",
             function(ev) {
-                if (this.touch) {
-                    var match = false;
+                var i, t;
 
-                    for (var i = 0; i < ev.changedTouches.length; i++) {
-                        if (this.touch === ev.changedTouches[i]) {
-                            match = true;
-                            break;
-                        }
+                if (this.menuactive && typeof this.menutouchid === "number") {
+                    for (i = 0; i < ev.changedTouches.length; i++) {
+                        t = ev.changedTouches[i];
+                        break;
                     }
+                }
 
-                    // To be safe, cancel even if we didn't find our touch
-                    // event:
-                    this.touch = false;
-                    this.coords = false;
-                    this.movecoords = false;
+                // To be safe, cancel even if we didn't find our touch event:
+                this.menuactive = false;
+                this.menutouchid = null;
+                this.coords = false;
+                this.movecoords = false;
+                // Erase the circle:
+                this.clear();
 
-                    if (match) {
-                        msgpara.innerHTML =
-                            "touchcancel event; ev.changedTouches.length " +
-                                "is&nbsp;" + ev.changedTouches.length;
-                    } else {
-                        // Looks like this shouldn't be reached, assuming the
-                        // other event handlers delete this.touch when
-                        // necessary.
-                        msgpara.innerHTML =
-                            "touchcancel event; ev.changedTouches.length is " +
-                                ev.changedTouches.length +
-                                "; ev.changedTouches does not contain our" +
-                                " touch";
-                    }
+                if (t) {
+                    msgpara.innerHTML =
+                        "touchcancel event; ev.changedTouches.length " +
+                            "is&nbsp;" + ev.changedTouches.length;
+                } else {
+                    // Looks like this shouldn't be reached, assuming the other
+                    // event handlers unset menuactive and menutouchid as
+                    // necessary.
+                    msgpara.innerHTML =
+                        "touchcancel event; ev.changedTouches.length is " +
+                            ev.changedTouches.length +
+                            "; ev.changedTouches does not contain our" +
+                            " touch";
                 }
             }
         );
 
         // Unlike with touch events, a mouseup doesn't necessarily happen on
-        // the same element as its mousedown:
+        // the same element as its mousedown.  In fact -- FIXME -- it might be
+        // better to have all the listeners on the body and, as appropriate,
+        // ignore the ones that aren't on the canvas.  Currently a multi-touch
+        // event only one touch of which is on the canvas is seen by the
+        // canvas's touchstart handler as a single touch.
         document.body.addWrappedEventListener("mouseup",
             function(ev) {
-                if (canvas.mouse) {
+                var endcoords;
+
+                if (canvas.menuactive) {
+                    if (typeof canvas.menutouchid === "number") {
+                        alert("mouseup while touch pending");
+                    }
                     ev.preventDefault();
-                    var endcoords = canvas.translateCoords(
-                        ev.pageX, ev.pageY);
-                    canvas.drawLine(
-                        canvas.coords.x, canvas.coords.y,
-                        endcoords.x, endcoords.y);
-                    canvas.drawCircle(endcoords.x, endcoords.y);
-                    canvas.mouse = false;
+                    endcoords = canvas.translateCoords(ev.pageX, ev.pageY);
+                    canvas.menuactive = false;
+                    canvas.menutouchid = null;
                     canvas.coords = false;
+                    canvas.movecoords = false;
+                    canvas.clear();
                 }
             }
         );
